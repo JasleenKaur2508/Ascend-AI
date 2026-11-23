@@ -62,7 +62,7 @@ const ResumeAnalysisPage = () => {
   const [showRawTextPreview, setShowRawTextPreview] = useState(true);
 
   const handleFileUpload = (e) => {
-    const selected = e.target.files[0];
+    const selected = e.target.files?.[0];
     if (selected) {
       if (selected.size > 10 * 1024 * 1024) {
         setError('File size exceeds 10MB limit.');
@@ -71,6 +71,25 @@ const ResumeAnalysisPage = () => {
       setFile(selected);
       setError('');
     }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const dropped = e.dataTransfer?.files?.[0];
+    if (dropped) {
+      if (dropped.size > 10 * 1024 * 1024) {
+        setError('File size exceeds 10MB limit.');
+        return;
+      }
+      setFile(dropped);
+      setError('');
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
   };
 
   const handleAnalyze = async () => {
@@ -141,7 +160,11 @@ const ResumeAnalysisPage = () => {
               <span className="text-xs text-[#7E7C94]">PDF, DOCX, TXT (Max 10MB)</span>
             </div>
 
-            <label className="border-2 border-dashed border-white/95 hover:border-[#7765E8] rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer bg-white/45 hover:bg-white/70 backdrop-blur-md transition-all group shadow-xs">
+            <label
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              className="border-2 border-dashed border-white/95 hover:border-[#7765E8] rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer bg-white/45 hover:bg-white/70 backdrop-blur-md transition-all group shadow-xs"
+            >
               <input
                 type="file"
                 accept=".pdf,.docx,.txt"

@@ -43,7 +43,8 @@ export const authAPI = {
 // Resume APIs
 export const resumeAPI = {
   uploadResume: (formData) => api.post('/resumes/upload', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 90000
   }),
   getHistory: () => api.get('/resumes/history'),
   getLatest: () => api.get('/resumes/latest'),

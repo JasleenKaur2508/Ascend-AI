@@ -18,29 +18,30 @@ exports.uploadAndAnalyze = async (req, res) => {
         });
       }
 
-      const form = new FormData();
-      form.append('file', fs.createReadStream(req.file.path), {
-        filename: req.file.originalname,
-        contentType: req.file.mimetype || 'application/octet-stream',
-        knownLength: req.file.size
-      });
-
-      mlResponse = await axios.post(`${ML_SERVICE_URL}/api/ml/analyze-resume`, form, {
-        headers: {
-          ...form.getHeaders()
-        },
-        maxContentLength: Infinity,
-        maxBodyLength: Infinity,
-        timeout: 90000 // 90s to comfortably allow high-res OCR if scanned
-      });
-
-      // Clean up uploaded temporary file
       try {
-        if (fs.existsSync(req.file.path)) {
-          fs.unlinkSync(req.file.path);
+        const fileBuffer = fs.readFileSync(req.file.path);
+        const form = new FormData();
+        form.append('file', fileBuffer, {
+          filename: req.file.originalname,
+          contentType: req.file.mimetype || 'application/octet-stream'
+        });
+
+        mlResponse = await axios.post(`${ML_SERVICE_URL}/api/ml/analyze-resume`, form, {
+          headers: {
+            ...form.getHeaders()
+          },
+          maxContentLength: Infinity,
+          maxBodyLength: Infinity,
+          timeout: 90000
+        });
+      } finally {
+        try {
+          if (req.file?.path && fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+          }
+        } catch (cleanupErr) {
+          // ignore cleanup warning
         }
-      } catch (cleanupErr) {
-        console.warn('Temporary file cleanup notice:', cleanupErr.message);
       }
     } else if (req.body.raw_text) {
       const form = new FormData();

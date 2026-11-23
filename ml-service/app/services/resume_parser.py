@@ -154,7 +154,6 @@ class ResumeParser:
             return full_digital_text
 
         # Step 2: Digital text was absent or minimal (< 50 chars) -> Scanned / Image PDF
-        print(f"Notice: Digital text length is {len(full_digital_text)} chars across {total_pages} pages. Initiating Tesseract OCR...")
         self.last_ocr_applied = True
 
         if not TESSERACT_PATH or not pytesseract:
@@ -169,15 +168,15 @@ class ResumeParser:
         for page_num in range(total_pages):
             try:
                 page = doc[page_num]
-                # Render page at 300 DPI for high OCR accuracy
-                pix = page.get_pixmap(dpi=300)
+                # Render page at 220 DPI for fast, high-accuracy OCR
+                pix = page.get_pixmap(dpi=220)
                 img = Image.open(io.BytesIO(pix.tobytes("png")))
                 page_ocr = pytesseract.image_to_string(img, lang="eng")
                 clean_ocr = page_ocr.strip()
                 if clean_ocr:
                     ocr_pages.append(clean_ocr)
-            except Exception as ocr_err:
-                print(f"Warning: OCR failed on page {page_num + 1}: {ocr_err}")
+            except Exception:
+                pass
 
         doc.close()
 
