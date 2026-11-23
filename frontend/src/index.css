@@ -1,0 +1,120 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background: 
+      radial-gradient(circle at 12% 14%, rgba(234, 228, 254, 0.85) 0%, transparent 45%),
+      radial-gradient(circle at 88% 18%, rgba(225, 236, 254, 0.85) 0%, transparent 45%),
+      radial-gradient(circle at 50% 50%, rgba(243, 239, 254, 0.65) 0%, transparent 55%),
+      radial-gradient(circle at 82% 82%, rgba(230, 239, 254, 0.8) 0%, transparent 50%),
+      radial-gradient(circle at 18% 86%, rgba(237, 232, 254, 0.75) 0%, transparent 50%),
+      linear-gradient(180deg, #F5F2FE 0%, #EEF3FE 45%, #F4F1FD 100%);
+    color: #212032;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  ::selection {
+    background-color: #7765E8;
+    color: #FFFFFF;
+  }
+}
+
+/* Apple Vision Pro Liquid Glass Surface */
+.glass-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.78) 0%, rgba(248, 246, 255, 0.62) 100%);
+  backdrop-filter: blur(16px) saturate(165%);
+  -webkit-backdrop-filter: blur(16px) saturate(165%);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-top: 1.5px solid rgba(255, 255, 255, 0.98);
+  box-shadow: 
+    0 14px 34px -4px rgba(119, 101, 232, 0.08),
+    0 4px 14px -2px rgba(143, 169, 254, 0.10),
+    inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.95);
+  border-radius: 1.35rem;
+  transform: translateZ(0);
+}
+
+.glass-card-hover {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+}
+
+.glass-card-hover:hover {
+  transform: translateY(-4px) scale(1.006);
+  border-color: rgba(142, 126, 245, 0.5);
+  border-top-color: rgba(255, 255, 255, 1);
+  box-shadow: 
+    0 24px 48px -8px rgba(119, 101, 232, 0.16),
+    0 8px 20px -2px rgba(143, 169, 254, 0.14),
+    inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 1);
+}
+
+/* Translucent Frosted Glass Navigation */
+.frosted-nav {
+  background: rgba(244, 241, 254, 0.78);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 4px 20px -2px rgba(119, 101, 232, 0.05);
+}
+
+/* Animated Subtle Gradient Border for Key CTAs & Badges */
+.animated-gradient-border {
+  position: relative;
+  background: white;
+  border-radius: 1rem;
+}
+
+.animated-gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: -1.5px;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #7765E8, #8FA9FE, #C4B5FD, #8FA9FE, #7765E8);
+  background-size: 300% 300%;
+  animation: borderGlowRotate 7s linear infinite;
+  z-index: -1;
+  opacity: 0.75;
+}
+
+@keyframes borderGlowRotate {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Minimalist Editorial Light Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(241, 238, 253, 0.6);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(119, 101, 232, 0.3);
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(119, 101, 232, 0.6);
+}
+
+/* Cursor Glow Aura behind cards */
+.ambient-glow-cursor {
+  position: fixed;
+  pointer-events: none;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(143, 169, 254, 0.28) 0%, rgba(119, 101, 232, 0.16) 45%, transparent 70%);
+  filter: blur(40px);
+  z-index: 0;
+  transition: transform 0.15s ease-out;
+  transform: translate(-50%, -50%);
+}

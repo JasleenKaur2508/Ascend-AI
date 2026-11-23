@@ -1,0 +1,159 @@
+{
+  "datasets": {
+    "resumes": {
+      "rows": 962,
+      "columns": [
+        "Category",
+        "Resume"
+      ],
+      "missing_values": {
+        "Category": 0,
+        "Resume": 0
+      },
+      "unique_resumes": 166,
+      "total_categories": 25,
+      "category_counts": {
+        "Java Developer": 84,
+        "Testing": 70,
+        "DevOps Engineer": 55,
+        "Python Developer": 48,
+        "Web Designing": 45,
+        "HR": 44,
+        "Hadoop": 42,
+        "Data Science": 40,
+        "Mechanical Engineer": 40,
+        "Sales": 40,
+        "Operations Manager": 40,
+        "ETL Developer": 40,
+        "Blockchain": 40,
+        "Arts": 36,
+        "Database": 33,
+        "Health and fitness": 30,
+        "Electrical Engineering": 30,
+        "PMO": 30,
+        "Business Analyst": 28,
+        "DotNet Developer": 28,
+        "Automation Testing": 26,
+        "Network Security Engineer": 25,
+        "Civil Engineer": 24,
+        "SAP Developer": 24,
+        "Advocate": 20
+      }
+    },
+    "ascend": {
+      "rows": 166,
+      "columns": [
+        "Category",
+        "Category_encoded",
+        "resume_length",
+        "word_count",
+        "skill_count",
+        "Resume"
+      ],
+      "missing_values": {
+        "Category": 0,
+        "Category_encoded": 0,
+        "resume_length": 0,
+        "word_count": 0,
+        "skill_count": 0,
+        "Resume": 0
+      },
+      "unique_resumes": 166,
+      "total_categories": 25,
+      "category_counts": {
+        "Java Developer": 13,
+        "Database": 11,
+        "Data Science": 10,
+        "HR": 10,
+        "Advocate": 10,
+        "Automation Testing": 7,
+        "DevOps Engineer": 7,
+        "Hadoop": 7,
+        "DotNet Developer": 7,
+        "Testing": 7,
+        "Arts": 6,
+        "Health and fitness": 6,
+        "Civil Engineer": 6,
+        "Business Analyst": 6,
+        "SAP Developer": 6,
+        "Python Developer": 6,
+        "Mechanical Engineer": 5,
+        "Sales": 5,
+        "Electrical Engineering": 5,
+        "Network Security Engineer": 5,
+        "ETL Developer": 5,
+        "Blockchain": 5,
+        "Web Designing": 4,
+        "Operations Manager": 4,
+        "PMO": 3
+      },
+      "stats": {
+        "resume_length": {
+          "mean": 2848.96,
+          "median": 2238.5,
+          "min": 124,
+          "max": 14168
+        },
+        "word_count": {
+          "mean": 408.3,
+          "median": 325.0,
+          "min": 19,
+          "max": 2113
+        },
+        "skill_count": {
+          "mean": 5.42,
+          "median": 4.0,
+          "min": 0,
+          "max": 24
+        }
+      }
+    },
+    "jobs": {
+      "rows": 2277,
+      "columns": [
+        "Job Title",
+        "Job Description"
+      ],
+      "missing_values": {
+        "Job Title": 0,
+        "Job Description": 0
+      },
+      "unique_titles": 15,
+      "unique_descriptions": 2264,
+      "top_titles": {
+        "JavaScript Developer": 166,
+        "Java Developer": 161,
+        "Software Engineer": 160,
+        "Node js developer": 160,
+        "iOS Developer": 159,
+        "PHP Developer": 156,
+        "Flutter Developer": 155,
+        "DevOps Engineer": 155,
+        "Django Developer": 152,
+        "Machine Learning": 152
+      }
+    },
+    "skills": {
+      "rows": 13893,
+      "columns": [
+        "label_cleaned",
+        "altLabels"
+      ],
+      "missing_values": {
+        "label_cleaned": 0,
+        "altLabels": 192
+      }
+    }
+  },
+  "data_leakage_investigation": {
+    "resumes_total": 962,
+    "resumes_unique": 166,
+    "ascend_unique": 166,
+    "finding": "resumes.csv contains 962 records representing repeated instances of 166 unique resumes across 25 categories. Ascend.csv contains exactly the 166 unique resumes with engineered features (length, word count, skill count). To avoid data leakage, ML cross-validation and splits must respect resume uniqueness."
+  },
+  "charts": {
+    "category_distribution": "category_distribution.png",
+    "feature_distributions": "feature_distributions.png",
+    "correlation_heatmap": "correlation_heatmap.png"
+  }
+}
