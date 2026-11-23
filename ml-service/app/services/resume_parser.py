@@ -32,57 +32,39 @@ if pytesseract and TESSERACT_PATH:
 
 
 # ---------------------------------------------------------------------------
-# Colab CE-2 exact preprocessing function (from Ascend_Ai (1).ipynb Cell 15)
+# Colab CE-2 exact preprocessing function (from Ascend_AI_CE2_Final_Complete.ipynb Section 4)
 # ---------------------------------------------------------------------------
-def clean_resume_text(text: str) -> str:
+def clean_resume_text(value: str) -> str:
     """
-    Exact preprocessing function from Colab CE-2 notebook (Cell 15).
+    Exact preprocessing function from Ascend_AI_CE2_Final_Complete.ipynb (Section 4).
+    Normalizes BOM, non-breaking spaces, bullet encoding artifacts, and whitespace.
     Must match the function used during training for valid inference.
     """
-    text = str(text)
-
-    # Remove common encoding artifacts
-    text = text.replace("â€¢", " ")
-    text = text.replace("â€", " ")
-    text = text.replace("â", " ")
-    text = text.replace("€", " ")
-    text = text.replace("™", " ")
-    text = text.replace("œ", " ")
-
-    # Replace bullets and special dashes
-    text = text.replace("•", " ")
-    text = text.replace("–", "-")
-    text = text.replace("—", "-")
-
-    # Remove stored newline and tab characters (literal escape sequences in strings)
-    text = text.replace("\\r\\n", " ")
-    text = text.replace("\\n", " ")
-    text = text.replace("\\r", " ")
-    text = text.replace("\\t", " ")
-
-    # Remove unusual non-ASCII characters
-    text = re.sub(r"[^\x00-\x7F]+", " ", text)
-
-    # Remove extra spaces
+    if value is None:
+        return ""
+    text = str(value).replace("\ufeff", " ").replace("\xa0", " ")
+    text = text.replace("â€¢", " ").replace("•", " ").replace("–", "-").replace("—", "-")
     text = re.sub(r"\s+", " ", text)
-
     return text.strip()
 
 
 class ResumeParser:
     def __init__(self):
         self.skill_extractor = get_skill_extractor()
-        # Colab CE-2 pipeline models (self-contained TF-IDF + classifier)
-        self.svm_pipeline = None      # best_svm_pipeline.joblib  (primary)
-        self.lr_pipeline = None       # logistic_regression_pipeline.joblib (confidence)
+        # Canonical Colab CE-2 pipeline models (self-contained TF-IDF + classifier)
+        self.svm_pipeline = None      # linear_svm_tfidf.joblib
+        self.lr_pipeline = None       # logistic_regression_tfidf.joblib
         self.label_encoder = None     # label_encoder.joblib
+        self.skill_vocabulary = None  # skill_vocabulary.joblib
+        self.missing_artifacts = []
         self._load_colab_models()
 
     def _load_colab_models(self):
-        """Loads the actual Colab CE-2 trained pipeline artifacts."""
-        svm_path = os.path.join(ARTIFACTS_DIR, "best_svm_pipeline.joblib")
-        lr_path  = os.path.join(ARTIFACTS_DIR, "logistic_regression_pipeline.joblib")
-        le_path  = os.path.join(ARTIFACTS_DIR, "label_encoder.joblib")
+        """Loads the canonical Colab CE-2 trained pipeline artifacts."""
+        svm_path = os.path.join(ARTIFACTS_DIR, "linear_svm_tfidf.joblib")
+        lr_path = os.path.join(ARTIFACTS_DIR, "logistic_regression_tfidf.joblib")
+        le_path = os.path.join(ARTIFACTS_DIR, "label_encoder.joblib")
+        vocab_path = os.path.join(ARTIFACTS_DIR, "skill_vocabulary.joblib")
 
         import warnings
         with warnings.catch_warnings():
@@ -90,21 +72,23 @@ class ResumeParser:
 
             if os.path.exists(svm_path):
                 self.svm_pipeline = joblib.load(svm_path)
-                print("✓ Loaded Colab CE-2 Linear SVM pipeline (best_svm_pipeline.joblib)")
             else:
-                print("⚠ best_svm_pipeline.joblib not found — classification unavailable")
+                self.missing_artifacts.append("linear_svm_tfidf.joblib")
 
             if os.path.exists(lr_path):
                 self.lr_pipeline = joblib.load(lr_path)
-                print("✓ Loaded Colab CE-2 Logistic Regression pipeline (logistic_regression_pipeline.joblib)")
             else:
-                print("⚠ logistic_regression_pipeline.joblib not found")
+                self.missing_artifacts.append("logistic_regression_tfidf.joblib")
 
             if os.path.exists(le_path):
                 self.label_encoder = joblib.load(le_path)
-                print(f"✓ Loaded label encoder — {len(self.label_encoder.classes_)} classes")
             else:
-                print("⚠ label_encoder.joblib not found")
+                self.missing_artifacts.append("label_encoder.joblib")
+
+            if os.path.exists(vocab_path):
+                self.skill_vocabulary = joblib.load(vocab_path)
+            else:
+                self.missing_artifacts.append("skill_vocabulary.joblib")
 
     # ------------------------------------------------------------------
     # Legacy compatibility property: expose 'classifier' as svm_pipeline
@@ -289,38 +273,39 @@ class ResumeParser:
 
     def predict_category(self, raw_text: str) -> Dict:
         """
-        Predicts professional category using the actual Colab CE-2 trained pipelines.
+        Predicts professional category using the canonical Colab CE-2 trained pipelines.
 
-        Primary:   Linear SVM pipeline  (best_svm_pipeline.joblib)
-        Secondary: Logistic Regression  (logistic_regression_pipeline.joblib) → confidence scores
-        Preprocessing: clean_resume_text() — exact Colab Cell 15 function
+        Primary:   Linear SVM pipeline  (linear_svm_tfidf.joblib)
+        Secondary: Logistic Regression  (logistic_regression_tfidf.joblib) → confidence scores
+        Preprocessing: clean_resume_text() — exact Colab Section 4 function
         """
         if self.svm_pipeline is None or self.label_encoder is None:
+            missing_msg = ", ".join(self.missing_artifacts) if self.missing_artifacts else "linear_svm_tfidf.joblib, label_encoder.joblib"
             return {
                 "category": "Unknown",
                 "confidence": 0.0,
                 "top_predictions": [],
                 "model_used": "none",
-                "note": "Colab CE-2 models not loaded"
+                "note": f"Required model artifacts missing in ml-service/artifacts/: {missing_msg}. Run './train.sh' or export from Ascend_AI_CE2_Final_Complete.ipynb."
             }
 
         # Apply exact Colab preprocessing before inference
         cleaned = clean_resume_text(raw_text)
 
-        # Primary prediction: Linear SVM (most accurate per evaluation_metrics.json)
+        # Primary prediction: Linear SVM (highest 3-fold CV generalization F1)
         svm_pred_encoded = self.svm_pipeline.predict([cleaned])[0]
         predicted_category = self.label_encoder.inverse_transform([svm_pred_encoded])[0]
 
         # Confidence scores: use LR pipeline (supports predict_proba)
         top_preds = []
-        confidence = 90.0  # SVM default
+        confidence = 88.2
 
         if self.lr_pipeline is not None:
             try:
                 lr_probs = self.lr_pipeline.predict_proba([cleaned])[0]
                 top_indices = np.argsort(lr_probs)[::-1][:3]
                 
-                # Calibrated relative confidence among top candidates (normalized to 100%)
+                # Calibrated relative confidence among top-3 candidates (normalized to 100%)
                 top_sum = sum(float(lr_probs[idx]) for idx in top_indices)
                 if top_sum > 0:
                     top_preds = [
@@ -333,7 +318,7 @@ class ResumeParser:
                     ]
                     confidence = top_preds[0]["confidence"]
                 else:
-                    top_preds = [{"category": predicted_category, "confidence": 90.0}]
+                    top_preds = [{"category": predicted_category, "confidence": 88.2}]
             except Exception:
                 top_preds = [{"category": predicted_category, "confidence": confidence}]
 
@@ -344,7 +329,7 @@ class ResumeParser:
             "category": predicted_category,
             "confidence": confidence,
             "top_predictions": top_preds,
-            "model_used": "Linear SVM (Colab CE-2 best_svm_pipeline)",
+            "model_used": "Linear SVM & Logistic Regression (linear_svm_tfidf.joblib / logistic_regression_tfidf.joblib)",
         }
 
     def parse_resume(self, raw_text: str) -> Dict:

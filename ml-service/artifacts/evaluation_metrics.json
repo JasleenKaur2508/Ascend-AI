@@ -23,6 +23,16 @@
   "linear_svm_cv_f1_mean": 0.8716,
   "linear_svm_cv_f1_std": 0.0464,
   "cv_folds": 3,
+  "preprocessing_config": {
+    "max_features": 5000,
+    "ngram_range": [
+      1,
+      2
+    ],
+    "stop_words": "english",
+    "sublinear_tf": true,
+    "class_weight": "balanced"
+  },
   "metrics": [
     {
       "Model": "Logistic Regression",

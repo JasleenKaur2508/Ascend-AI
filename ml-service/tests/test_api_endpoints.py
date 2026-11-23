@@ -17,6 +17,10 @@ def test_health_endpoint():
     assert data["status"] == "online"
     assert data["models_loaded"] is True
     assert data["jobs_indexed"] > 0
+    assert data["colab_artifacts_loaded"]["linear_svm_tfidf"] is True
+    assert data["colab_artifacts_loaded"]["logistic_regression_tfidf"] is True
+    assert data["colab_artifacts_loaded"]["label_encoder"] is True
+    assert data["colab_artifacts_loaded"]["skill_vocabulary"] is True
 
 def test_classify_resume_endpoint():
     payload = {

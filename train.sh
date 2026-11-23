@@ -17,7 +17,7 @@ fi
 echo "1. Running Exploratory Data Analysis (EDA)..."
 "$PYTHON_EXEC" "$SCRIPT_DIR/ml-service/training/eda.py"
 
-echo "2. Training & Evaluating Classifiers (NB, Logistic Regression, Linear SVM)..."
+echo "2. Training & Evaluating Classifiers (Logistic Regression & Linear SVM)..."
 "$PYTHON_EXEC" "$SCRIPT_DIR/ml-service/training/train_classifier.py"
 
 echo "=========================================="

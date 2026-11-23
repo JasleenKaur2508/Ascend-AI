@@ -9,8 +9,8 @@ echo "=========================================="
 echo "Starting ASCEND AI Services"
 echo "=========================================="
 
-# Check if model artifacts exist; if not, train them
-if [ ! -f "$SCRIPT_DIR/ml-service/artifacts/best_svm_pipeline.joblib" ]; then
+# Check if canonical model artifacts exist; if not, train them
+if [ ! -f "$SCRIPT_DIR/ml-service/artifacts/linear_svm_tfidf.joblib" ] || [ ! -f "$SCRIPT_DIR/ml-service/artifacts/logistic_regression_tfidf.joblib" ]; then
     echo "Model artifacts not detected. Running training first..."
     bash "$SCRIPT_DIR/train.sh"
 fi

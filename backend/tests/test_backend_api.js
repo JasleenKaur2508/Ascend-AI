@@ -1,16 +1,20 @@
 const { describe, it, before, after } = require('node:test');
 const assert = require('node:assert');
 const axios = require('axios');
-const { app, server } = require('../src/server');
 
-const BASE_URL = 'http://localhost:5001';
+process.env.TEST_PORT = process.env.TEST_PORT || '5055';
+const { app, server } = require('../src/server');
+const { closeDB } = require('../src/config/db');
+
+const BASE_URL = `http://127.0.0.1:${process.env.TEST_PORT}`;
 
 describe('ASCEND AI Backend API Tests', () => {
   let authToken = '';
   let testEmail = `test_${Date.now()}@example.com`;
 
-  after(() => {
+  after(async () => {
     server.close();
+    await closeDB();
   });
 
   it('GET /health returns 200 online', async () => {
@@ -65,7 +69,8 @@ describe('ASCEND AI Backend API Tests', () => {
     const res = await axios.get(`${BASE_URL}/api/analytics/colab-metrics`);
     assert.strictEqual(res.status, 200);
     assert.strictEqual(res.data.status, 'success');
-    assert.strictEqual(res.data.data.best_model, 'Linear SVM');
-    assert.strictEqual(res.data.data.linear_svm_accuracy, 1.0);
+    assert.strictEqual(res.data.data.best_model, 'Logistic Regression');
+    assert.strictEqual(res.data.data.linear_svm_accuracy, 0.8824);
+    assert.strictEqual(res.data.data.logistic_regression_accuracy, 0.8824);
   });
 });

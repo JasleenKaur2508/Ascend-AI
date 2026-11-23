@@ -61,16 +61,19 @@ def health_check():
     svm_loaded = resume_parser.svm_pipeline is not None
     lr_loaded  = resume_parser.lr_pipeline is not None
     le_loaded  = resume_parser.label_encoder is not None
+    vocab_loaded = resume_parser.skill_vocabulary is not None
     return {
         "status": "online",
         "service": "ASCEND AI ML Microservice",
         "colab_artifacts_loaded": {
-            "linear_svm_pipeline": svm_loaded,
-            "logistic_regression_pipeline": lr_loaded,
+            "linear_svm_tfidf": svm_loaded,
+            "logistic_regression_tfidf": lr_loaded,
             "label_encoder": le_loaded,
+            "skill_vocabulary": vocab_loaded,
             "label_classes": len(resume_parser.label_encoder.classes_) if le_loaded else 0
         },
-        "models_loaded": svm_loaded and le_loaded,
+        "missing_artifacts": resume_parser.missing_artifacts,
+        "models_loaded": svm_loaded and lr_loaded and le_loaded,
         "jobs_indexed": len(job_matcher.df_jobs) if job_matcher.df_jobs is not None else 0
     }
 
@@ -331,7 +334,13 @@ def get_colab_metrics():
         with open(metrics_path, "r", encoding="utf-8") as f:
             colab_metrics = json.load(f)
             
-    preprocessing_config = {}
+    preprocessing_config = colab_metrics.get("preprocessing_config", {
+        "max_features": 5000,
+        "ngram_range": [1, 2],
+        "stop_words": "english",
+        "sublinear_tf": True,
+        "class_weight": "balanced"
+    })
     if os.path.exists(config_path):
         with open(config_path, "r", encoding="utf-8") as f:
             preprocessing_config = json.load(f)
