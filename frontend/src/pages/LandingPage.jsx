@@ -78,16 +78,16 @@ const LandingPage = () => {
               <div className="text-xs font-bold text-[#7E7C94] mt-1">Professional Categories</div>
             </div>
             <div className="p-5 rounded-3xl glass-card glass-card-hover text-left">
-              <div className="text-3xl font-black text-[#7765E8] font-mono">99.45%</div>
-              <div className="text-xs font-bold text-[#7E7C94] mt-1">Macro F1 (Linear SVM)</div>
+              <div className="text-3xl font-black text-[#7765E8] font-mono">88.24%</div>
+              <div className="text-xs font-bold text-[#7E7C94] mt-1">Test Accuracy (LR & SVM)</div>
             </div>
             <div className="p-5 rounded-3xl glass-card glass-card-hover text-left">
               <div className="text-3xl font-black text-[#212032] font-mono">13,893</div>
               <div className="text-xs font-bold text-[#7E7C94] mt-1">Taxonomy Skills Dict</div>
             </div>
             <div className="p-5 rounded-3xl glass-card glass-card-hover text-left">
-              <div className="text-3xl font-black text-emerald-600 font-mono">2,277</div>
-              <div className="text-xs font-bold text-[#7E7C94] mt-1">Indexed Job Postings</div>
+              <div className="text-3xl font-black text-emerald-600 font-mono">2,270</div>
+              <div className="text-xs font-bold text-[#7E7C94] mt-1">Cleaned Job Postings</div>
             </div>
           </motion.div>
         </div>
@@ -122,12 +122,12 @@ const LandingPage = () => {
               </div>
               <h3 className="text-xl font-bold text-[#212032]">Supervised Resume Classification</h3>
               <p className="text-sm text-[#7E7C94] leading-relaxed">
-                Trained TF-IDF n-gram vectorizer paired with calibrated Linear SVM and Logistic Regression models. Accurately predicts professional domains without data leakage.
+                Trained TF-IDF n-gram vectorizer paired with balanced Linear SVM and Logistic Regression pipelines on 166 deduplicated resumes. Accurately predicts domains without data leakage.
               </p>
             </div>
             <div className="pt-6 border-t border-white/80 mt-6 flex items-center justify-between text-xs font-bold">
-              <span className="text-[#7E7C94]">962 Supervised Resumes</span>
-              <span className="text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">99.48% Test Acc</span>
+              <span className="text-[#7E7C94]">166 Unique Resumes</span>
+              <span className="text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">88.24% Test Acc</span>
             </div>
           </div>
 

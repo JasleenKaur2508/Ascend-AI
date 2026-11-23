@@ -16,8 +16,13 @@ export const AuthProvider = ({ children }) => {
       if (token) {
         try {
           const res = await authAPI.getProfile();
-          setUser(res.data.user);
-          localStorage.setItem('ascend_user', JSON.stringify(res.data.user));
+          const localRole = localStorage.getItem('ascend_target_role');
+          const fetchedUser = {
+            ...res.data.user,
+            targetRole: localRole || res.data.user?.targetRole || 'Full Stack Developer'
+          };
+          setUser(fetchedUser);
+          localStorage.setItem('ascend_user', JSON.stringify(fetchedUser));
         } catch (err) {
           console.error('Session expired or invalid:', err);
           logout();
@@ -35,6 +40,9 @@ export const AuthProvider = ({ children }) => {
     setUser(newUser);
     localStorage.setItem('ascend_token', newToken);
     localStorage.setItem('ascend_user', JSON.stringify(newUser));
+    if (newUser?.targetRole) {
+      localStorage.setItem('ascend_target_role', newUser.targetRole);
+    }
     return newUser;
   };
 
@@ -45,6 +53,9 @@ export const AuthProvider = ({ children }) => {
     setUser(newUser);
     localStorage.setItem('ascend_token', newToken);
     localStorage.setItem('ascend_user', JSON.stringify(newUser));
+    if (newUser?.targetRole) {
+      localStorage.setItem('ascend_target_role', newUser.targetRole);
+    }
     return newUser;
   };
 
@@ -53,9 +64,13 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     localStorage.removeItem('ascend_token');
     localStorage.removeItem('ascend_user');
+    localStorage.removeItem('ascend_target_role');
   };
 
   const updateUser = (updated) => {
+    if (updated?.targetRole) {
+      localStorage.setItem('ascend_target_role', updated.targetRole);
+    }
     setUser(prev => {
       const next = { ...prev, ...updated };
       localStorage.setItem('ascend_user', JSON.stringify(next));

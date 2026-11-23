@@ -1,8 +1,50 @@
 {
-    "best_model": "Linear SVM",
-    "logistic_regression_accuracy": 1.0,
-    "logistic_regression_f1_score": 1.0,
-    "linear_svm_accuracy": 1.0,
-    "linear_svm_f1_score": 1.0,
-    "test_instances_evaluated": 34
+  "selected_model": "Logistic Regression",
+  "best_model": "Logistic Regression",
+  "records": 166,
+  "raw_records": 962,
+  "duplicate_rows_removed": 796,
+  "categories": 25,
+  "train_records": 132,
+  "test_records": 34,
+  "test_instances_evaluated": 34,
+  "logistic_regression_accuracy": 0.8824,
+  "logistic_regression_precision_weighted": 0.8554,
+  "logistic_regression_recall_weighted": 0.8824,
+  "logistic_regression_f1_score": 0.855,
+  "logistic_regression_macro_f1": 0.8276,
+  "logistic_regression_cv_f1_mean": 0.8678,
+  "logistic_regression_cv_f1_std": 0.0456,
+  "linear_svm_accuracy": 0.8824,
+  "linear_svm_precision_weighted": 0.8456,
+  "linear_svm_recall_weighted": 0.8824,
+  "linear_svm_f1_score": 0.8501,
+  "linear_svm_macro_f1": 0.821,
+  "linear_svm_cv_f1_mean": 0.8716,
+  "linear_svm_cv_f1_std": 0.0464,
+  "cv_folds": 3,
+  "metrics": [
+    {
+      "Model": "Logistic Regression",
+      "Accuracy": 0.8823529411764706,
+      "Precision (weighted)": 0.8553921568627451,
+      "Recall (weighted)": 0.8823529411764706,
+      "F1-score (weighted)": 0.8550420168067226,
+      "Macro Precision": 0.8233333333333333,
+      "Macro Recall": 0.86,
+      "Macro F1": 0.8276190476190476
+    },
+    {
+      "Model": "Linear SVM",
+      "Accuracy": 0.8823529411764706,
+      "Precision (weighted)": 0.8455882352941176,
+      "Recall (weighted)": 0.8823529411764706,
+      "F1-score (weighted)": 0.8501400560224088,
+      "Macro Precision": 0.81,
+      "Macro Recall": 0.86,
+      "Macro F1": 0.8209523809523809
+    }
+  ],
+  "similarity_method": "TF-IDF + cosine similarity",
+  "skill_method": "ESCO label and alternative-label dictionary matching"
 }

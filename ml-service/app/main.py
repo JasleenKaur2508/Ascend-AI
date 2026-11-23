@@ -270,9 +270,9 @@ def batch_screening(payload: BatchScreeningRequest):
     """
     Ranks multiple candidates against a target job requisition for recruiters.
     """
-    job_desc = payload.job_description
+    job_desc = f"{payload.job_title}. {payload.job_description}"
     job_req_skills = skill_extractor.extract_skills(job_desc)
-    job_skill_names = [s["canonical"] for s in job_req_skills[:12]]
+    job_skill_names = [s["canonical"] for s in job_req_skills[:14]]
     
     screened_candidates = []
     
@@ -284,7 +284,8 @@ def batch_screening(payload: BatchScreeningRequest):
             resume_text=candidate.resume_text,
             job_description=job_desc,
             resume_skills=candidate_skills,
-            job_required_skills=job_skill_names
+            job_required_skills=job_skill_names,
+            semantic_score=None
         )
         
         screened_candidates.append({
@@ -344,23 +345,32 @@ def get_colab_metrics():
             "preprocessing_config": preprocessing_config,
             "models_evaluated": [
                 {
-                    "name": "Linear SVM (Pipeline)",
-                    "accuracy": colab_metrics.get("linear_svm_accuracy", 1.0),
-                    "f1_score": colab_metrics.get("linear_svm_f1_score", 1.0),
-                    "is_best": colab_metrics.get("best_model") == "Linear SVM"
+                    "name": "Logistic Regression (Pipeline)",
+                    "accuracy": colab_metrics.get("logistic_regression_accuracy", 0.8824),
+                    "precision_weighted": colab_metrics.get("logistic_regression_precision_weighted", 0.8554),
+                    "recall_weighted": colab_metrics.get("logistic_regression_recall_weighted", 0.8824),
+                    "f1_score": colab_metrics.get("logistic_regression_f1_score", 0.8550),
+                    "cv_f1_mean": colab_metrics.get("logistic_regression_cv_f1_mean", 0.8678),
+                    "cv_f1_std": colab_metrics.get("logistic_regression_cv_f1_std", 0.0456),
+                    "is_best": colab_metrics.get("best_model") == "Logistic Regression"
                 },
                 {
-                    "name": "Logistic Regression (Pipeline)",
-                    "accuracy": colab_metrics.get("logistic_regression_accuracy", 1.0),
-                    "f1_score": colab_metrics.get("logistic_regression_f1_score", 1.0),
-                    "is_best": colab_metrics.get("best_model") == "Logistic Regression"
+                    "name": "Linear SVM (Pipeline)",
+                    "accuracy": colab_metrics.get("linear_svm_accuracy", 0.8824),
+                    "precision_weighted": colab_metrics.get("linear_svm_precision_weighted", 0.8456),
+                    "recall_weighted": colab_metrics.get("linear_svm_recall_weighted", 0.8824),
+                    "f1_score": colab_metrics.get("linear_svm_f1_score", 0.8501),
+                    "cv_f1_mean": colab_metrics.get("linear_svm_cv_f1_mean", 0.8716),
+                    "cv_f1_std": colab_metrics.get("linear_svm_cv_f1_std", 0.0464),
+                    "is_best": colab_metrics.get("best_model") == "Linear SVM"
                 }
             ],
             "dataset_info": {
-                "training_corpus": "166 unique deduplicated resumes (Ascend.csv)",
+                "training_corpus": "166 unique deduplicated resumes (from 962 raw rows in resumes.csv)",
                 "categories_count": classes_count,
+                "train_instances": colab_metrics.get("train_records", 132),
                 "test_instances_evaluated": colab_metrics.get("test_instances_evaluated", 34),
-                "evaluation_environment": "Google Colab CE-2 Environment"
+                "evaluation_environment": "Google Colab CE-2 Notebook (Ascend_AI_CE2_Final_Complete.ipynb)"
             }
         }
     }

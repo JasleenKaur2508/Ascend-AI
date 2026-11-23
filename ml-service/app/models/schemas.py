@@ -20,7 +20,7 @@ class ATSScoreRequest(BaseModel):
     job_description: str
     resume_skills: List[str] = []
     job_required_skills: List[str] = []
-    semantic_score: float = 75.0
+    semantic_score: Optional[float] = None
     custom_weights: Optional[Dict[str, float]] = None
 
 class SkillGapRequest(BaseModel):

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { resumeAPI, authAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { AVAILABLE_ROLES, resolveTargetRole, computeRoleSkillGap } from '../utils/roleStandards';
 import {
   Target,
   CheckCircle2,
@@ -19,23 +20,18 @@ const SkillGapPage = () => {
   const [loading, setLoading] = useState(true);
   const [savingRole, setSavingRole] = useState(false);
 
-  // Default target role skill sets for benchmarking
-  const ROLE_STANDARDS = {
-    'Full Stack Developer': ['React', 'Node.js', 'Express', 'MongoDB', 'JavaScript', 'TypeScript', 'Docker', 'REST API', 'Git', 'SQL'],
-    'Software Engineer': ['Python', 'Java', 'Data Structures', 'Algorithms', 'SQL', 'Git', 'Docker', 'Linux', 'System Design', 'CI/CD'],
-    'Data Scientist': ['Python', 'Machine Learning', 'Pandas', 'NumPy', 'Scikit-learn', 'SQL', 'Deep Learning', 'NLP', 'Data Science', 'Docker'],
-    'DevOps Engineer': ['Docker', 'Kubernetes', 'Linux', 'AWS', 'CI/CD', 'Git', 'Jenkins', 'Terraform', 'Bash', 'Microservices'],
-    'Java Developer': ['Java', 'Spring Boot', 'Hibernate', 'Microservices', 'SQL', 'Docker', 'REST API', 'Git', 'Kafka', 'Jenkins'],
-    'Cloud Architect': ['AWS', 'Cloud Computing', 'Docker', 'Kubernetes', 'Terraform', 'Linux', 'Microservices', 'Security', 'Python', 'Networking']
-  };
-
-  const currentTargetRole = user?.targetRole || 'Full Stack Developer';
+  const currentTargetRole = resolveTargetRole(user?.targetRole, latestResume?.predictedCategory);
 
   useEffect(() => {
     const loadData = async () => {
       try {
         const res = await resumeAPI.getLatest();
-        setLatestResume(res.data.data);
+        const resData = res.data.data;
+        setLatestResume(resData);
+        if (user && !AVAILABLE_ROLES.includes(user.targetRole)) {
+          const resolved = resolveTargetRole(user.targetRole, resData?.predictedCategory);
+          updateUser({ targetRole: resolved });
+        }
       } catch (err) {
         console.error('Error fetching resume for skill gap:', err);
       } finally {
@@ -47,10 +43,11 @@ const SkillGapPage = () => {
 
   const handleRoleSelect = async (role) => {
     if (role === currentTargetRole || savingRole) return;
+    // Optimistically update AuthContext & localStorage immediately so Dashboard & all pages stay in sync
+    updateUser({ targetRole: role });
     setSavingRole(true);
     try {
       await authAPI.updateProfile({ targetRole: role });
-      updateUser({ targetRole: role });
     } catch (err) {
       console.error('Failed to update target role:', err);
     } finally {
@@ -58,15 +55,10 @@ const SkillGapPage = () => {
     }
   };
 
-  const candidateSkills = latestResume ? latestResume.extractedSkills.map(s => s.canonical) : [];
-  const candidateSkillsLower = new Set(candidateSkills.map(s => s.toLowerCase()));
-
-  const requiredSkills = ROLE_STANDARDS[currentTargetRole] || ROLE_STANDARDS['Full Stack Developer'];
-
-  const possessedSkills = requiredSkills.filter(s => candidateSkillsLower.has(s.toLowerCase()));
-  const missingSkills = requiredSkills.filter(s => !candidateSkillsLower.has(s.toLowerCase()));
-
-  const matchPct = Math.round((possessedSkills.length / requiredSkills.length) * 100);
+  const { requiredSkills, possessedSkills, missingSkills, matchPct } = computeRoleSkillGap(
+    currentTargetRole,
+    latestResume?.extractedSkills || []
+  );
 
   if (loading) {
     return (
@@ -99,7 +91,7 @@ const SkillGapPage = () => {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {Object.keys(ROLE_STANDARDS).map((role) => (
+          {AVAILABLE_ROLES.map((role) => (
             <button
               key={role}
               onClick={() => handleRoleSelect(role)}

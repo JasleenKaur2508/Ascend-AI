@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { careerAPI, resumeAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { resolveTargetRole, computeRoleSkillGap } from '../utils/roleStandards';
 import {
   BookOpen,
   CheckCircle2,
@@ -11,15 +12,6 @@ import {
   Check,
   AlertCircle
 } from 'lucide-react';
-
-const ROLE_STANDARDS = {
-  'Full Stack Developer': ['React', 'Node.js', 'Express', 'MongoDB', 'JavaScript', 'TypeScript', 'Docker', 'REST API', 'Git', 'SQL'],
-  'Software Engineer': ['Python', 'Java', 'Data Structures', 'Algorithms', 'SQL', 'Git', 'Docker', 'Linux', 'System Design', 'CI/CD'],
-  'Data Scientist': ['Python', 'Machine Learning', 'Pandas', 'NumPy', 'Scikit-learn', 'SQL', 'Deep Learning', 'NLP', 'Data Science', 'Docker'],
-  'DevOps Engineer': ['Docker', 'Kubernetes', 'Linux', 'AWS', 'CI/CD', 'Git', 'Jenkins', 'Terraform', 'Bash', 'Microservices'],
-  'Java Developer': ['Java', 'Spring Boot', 'Hibernate', 'Microservices', 'SQL', 'Docker', 'REST API', 'Git', 'Kafka', 'Jenkins'],
-  'Cloud Architect': ['AWS', 'Cloud Computing', 'Docker', 'Kubernetes', 'Terraform', 'Linux', 'Microservices', 'Security', 'Python', 'Networking']
-};
 
 const CoursesPage = () => {
   const { user } = useAuth();
@@ -33,14 +25,13 @@ const CoursesPage = () => {
       try {
         const resumeRes = await resumeAPI.getLatest().catch(() => null);
         const resume = resumeRes?.data?.data;
-        const candidateSkills = resume ? resume.extractedSkills.map(s => s.canonical.toLowerCase()) : [];
-        const candidateSkillsSet = new Set(candidateSkills);
 
-        const targetRole = user?.targetRole || 'Full Stack Developer';
-        const roleSkills = ROLE_STANDARDS[targetRole] || ROLE_STANDARDS['Full Stack Developer'];
+        const targetRole = resolveTargetRole(user?.targetRole, resume?.predictedCategory);
+        const { missingSkills: actualMissing } = computeRoleSkillGap(
+          targetRole,
+          resume?.extractedSkills || []
+        );
 
-        // Compute actual missing skills
-        const actualMissing = roleSkills.filter(s => !candidateSkillsSet.has(s.toLowerCase()));
         const missingSkillsToSend = actualMissing.length > 0
           ? actualMissing
           : ['Docker', 'Kubernetes', 'System Design', 'Microservices', 'AWS'];
@@ -50,16 +41,29 @@ const CoursesPage = () => {
           targetRole: targetRole
         });
 
-        // Deduplicate courses by unique ID or URL
+        // Strict deduplication by courseId, normalized title, URL, and skill
         const rawCourses = res.data.data || [];
-        const seen = new Set();
+        const seenIds = new Set();
+        const seenTitles = new Set();
+        const seenUrls = new Set();
         const deduplicated = [];
+
         for (const c of rawCourses) {
-          const key = c.courseId || c.title || c.url;
-          if (!seen.has(key)) {
-            seen.add(key);
-            deduplicated.push(c);
+          const cid = (c.courseId || c.course_id || '').trim().toLowerCase();
+          const ctitle = (c.title || '').trim().toLowerCase();
+          const curl = (c.url || '').trim().toLowerCase();
+
+          if (
+            (cid && seenIds.has(cid)) ||
+            (ctitle && seenTitles.has(ctitle)) ||
+            (curl && seenUrls.has(curl))
+          ) {
+            continue;
           }
+          if (cid) seenIds.add(cid);
+          if (ctitle) seenTitles.add(ctitle);
+          if (curl) seenUrls.add(curl);
+          deduplicated.push(c);
         }
 
         setCourses(deduplicated);

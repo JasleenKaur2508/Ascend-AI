@@ -104,7 +104,7 @@ const MLAnalyticsPage = () => {
           }`}
         >
           <Award className="w-3.5 h-3.5" />
-          <span>Full Model Benchmark (962 Corpus)</span>
+          <span>Model Evaluation & Confusion Matrix</span>
         </button>
 
         <button
@@ -146,21 +146,21 @@ const MLAnalyticsPage = () => {
                     Live Microservice Artifacts Loaded
                   </span>
                   <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold uppercase tracking-wider border border-emerald-200">
-                    Colab CE-2 Verified
+                    Colab CE-2 Reconciled
                   </span>
                 </div>
                 <div className="text-2xl sm:text-3xl font-black text-[#212032] mt-2">
-                  {colabData?.best_model ? `${colabData.best_model} Pipeline` : 'Linear SVM Pipeline'}
+                  {colabData?.best_model ? `${colabData.best_model} & Linear SVM Pipelines` : 'Logistic Regression & Linear SVM Pipelines'}
                 </div>
                 <p className="text-xs text-[#7E7C94] mt-1 max-w-2xl leading-relaxed">
-                  Exported directly from Google Colab CE-2 notebook. Both Linear SVM and Logistic Regression run inside full scikit-learn Pipelines with built-in TF-IDF vectorization and the exact <code>clean_resume_text</code> preprocessing.
+                  Reconciled directly with <code>Ascend_AI_CE2_Final_Complete.ipynb</code>. Evaluated on 166 deduplicated resumes (132 train / 34 test) across 25 categories using <code>TfidfVectorizer(max_features=5000, ngram_range=(1,2), sublinear_tf=True)</code> inside leak-free scikit-learn Pipelines.
                 </p>
               </div>
               <div className="flex gap-4">
                 <div className="p-4 rounded-2xl bg-white/70 border border-white/80 text-center backdrop-blur-md shadow-xs">
-                  <div className="text-[10px] text-[#7E7C94] uppercase font-bold">Linear SVM Test Acc</div>
+                  <div className="text-[10px] text-[#7E7C94] uppercase font-bold">Test Set Accuracy</div>
                   <div className="text-3xl font-black font-mono text-emerald-600">
-                    {colabData?.linear_svm_accuracy ? `${(colabData.linear_svm_accuracy * 100).toFixed(0)}%` : '100%'}
+                    {colabData?.linear_svm_accuracy ? `${(colabData.linear_svm_accuracy * 100).toFixed(2)}%` : '88.24%'}
                   </div>
                 </div>
                 <div className="p-4 rounded-2xl bg-white/70 border border-white/80 text-center backdrop-blur-md shadow-xs">
@@ -176,8 +176,8 @@ const MLAnalyticsPage = () => {
             <div className="p-4 rounded-2xl bg-[#F1EEFD]/80 border border-white/80 text-xs text-[#212032] flex items-start gap-2.5 backdrop-blur-md">
               <Info className="w-4 h-4 text-[#7765E8] shrink-0 mt-0.5" />
               <div className="leading-relaxed">
-                <strong className="text-[#7765E8]">Academic Integrity & Dataset Provenance Note:</strong>{' '}
-                These metrics are directly parsed from <code>evaluation_metrics.json</code> generated in Google Colab CE-2. The 100% accuracy was achieved evaluating on 34 holdout test instances drawn from 166 unique deduplicated resumes across 25 professional categories. In high-dimensional sparse TF-IDF spaces (3,000 features, n-grams 1-2), linear hyperplanes achieve complete separation across clean domain categories.
+                <strong className="text-[#7765E8]">Academic Integrity & Deduplication Provenance Note:</strong>{' '}
+                In Section 4 of the Colab CE-2 notebook, removing 796 duplicate rows from <code>resumes.csv</code> (962 raw rows) yields <strong>166 unique resumes</strong> across 25 categories. Evaluating strictly on the <strong>34 unseen holdout test instances</strong> prevents duplicate-row data leakage and yields a realistic <strong>88.24% test accuracy</strong> (30/34 correct), <strong>85.50% weighted F1</strong> (Logistic Regression), <strong>85.01% weighted F1</strong> (Linear SVM), and <strong>87.16% ± 4.64%</strong> 3-fold Stratified CV weighted F1.
               </div>
             </div>
           </div>
@@ -186,7 +186,7 @@ const MLAnalyticsPage = () => {
           <div className="p-7 rounded-3xl glass-card border border-white/80 space-y-4 shadow-liquid">
             <h3 className="text-base font-bold text-[#212032] flex items-center gap-2">
               <Award className="w-4 h-4 text-[#7765E8]" />
-              <span>Colab CE-2 Supervised Evaluation Benchmarks</span>
+              <span>Colab CE-2 Supervised Evaluation Benchmarks (166 Unique Resumes: 132 Train / 34 Test)</span>
             </h3>
 
             <div className="overflow-x-auto">
@@ -195,54 +195,61 @@ const MLAnalyticsPage = () => {
                   <tr className="border-b border-white/80 text-[#7E7C94] font-bold">
                     <th className="py-3 px-4">Trained Pipeline</th>
                     <th className="py-3 px-4">Pipeline Architecture</th>
-                    <th className="py-3 px-4">Accuracy</th>
-                    <th className="py-3 px-4">F1-Score</th>
-                    <th className="py-3 px-4">Test Samples</th>
-                    <th className="py-3 px-4">Role in Microservice</th>
+                    <th className="py-3 px-4">Test Accuracy</th>
+                    <th className="py-3 px-4">Precision (Weighted)</th>
+                    <th className="py-3 px-4">Recall (Weighted)</th>
+                    <th className="py-3 px-4">F1-Score (Weighted)</th>
+                    <th className="py-3 px-4">3-Fold CV F1</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/80 font-mono">
                   <tr className="hover:bg-white/60 transition-colors">
                     <td className="py-3.5 px-4 font-sans font-bold text-[#212032] flex items-center gap-2">
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>Linear SVM Pipeline</span>
+                      <span>Logistic Regression</span>
                     </td>
                     <td className="py-3.5 px-4 text-[#212032] font-sans">
-                      <code>TfidfVectorizer(3000) → LinearSVC</code>
+                      <code>TfidfVectorizer(5000) → LogisticRegression(balanced)</code>
                     </td>
                     <td className="py-3.5 px-4 font-black text-emerald-600">
-                      {colabData?.linear_svm_accuracy ? `${(colabData.linear_svm_accuracy * 100).toFixed(1)}%` : '100.0%'}
+                      {colabData?.logistic_regression_accuracy ? `${(colabData.logistic_regression_accuracy * 100).toFixed(2)}%` : '88.24%'}
+                    </td>
+                    <td className="py-3.5 px-4 text-[#212032]">
+                      {colabData?.logistic_regression_precision_weighted ? `${(colabData.logistic_regression_precision_weighted * 100).toFixed(2)}%` : '85.54%'}
+                    </td>
+                    <td className="py-3.5 px-4 text-[#212032]">
+                      {colabData?.logistic_regression_recall_weighted ? `${(colabData.logistic_regression_recall_weighted * 100).toFixed(2)}%` : '88.24%'}
                     </td>
                     <td className="py-3.5 px-4 font-black text-emerald-600">
-                      {colabData?.linear_svm_f1_score ? colabData.linear_svm_f1_score.toFixed(2) : '1.00'}
+                      {colabData?.logistic_regression_f1_score ? `${(colabData.logistic_regression_f1_score * 100).toFixed(2)}%` : '85.50%'}
                     </td>
-                    <td className="py-3.5 px-4 text-[#212032] font-bold">{colabData?.test_instances_evaluated || 34}</td>
-                    <td className="py-3.5 px-4 font-sans">
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">
-                        Primary Classifier (Highest Margin)
-                      </span>
+                    <td className="py-3.5 px-4 text-[#7765E8] font-bold">
+                      86.78% ± 4.56%
                     </td>
                   </tr>
 
                   <tr className="hover:bg-white/60 transition-colors">
                     <td className="py-3.5 px-4 font-sans font-bold text-[#212032] flex items-center gap-2">
                       <CheckCircle2 className="w-3.5 h-3.5 text-[#7765E8]" />
-                      <span>Logistic Regression Pipeline</span>
+                      <span>Linear SVM</span>
                     </td>
                     <td className="py-3.5 px-4 text-[#212032] font-sans">
-                      <code>TfidfVectorizer(3000) → LogisticRegression</code>
+                      <code>TfidfVectorizer(5000) → LinearSVC(balanced)</code>
                     </td>
                     <td className="py-3.5 px-4 font-black text-emerald-600">
-                      {colabData?.logistic_regression_accuracy ? `${(colabData.logistic_regression_accuracy * 100).toFixed(1)}%` : '100.0%'}
+                      {colabData?.linear_svm_accuracy ? `${(colabData.linear_svm_accuracy * 100).toFixed(2)}%` : '88.24%'}
+                    </td>
+                    <td className="py-3.5 px-4 text-[#212032]">
+                      {colabData?.linear_svm_precision_weighted ? `${(colabData.linear_svm_precision_weighted * 100).toFixed(2)}%` : '84.56%'}
+                    </td>
+                    <td className="py-3.5 px-4 text-[#212032]">
+                      {colabData?.linear_svm_recall_weighted ? `${(colabData.linear_svm_recall_weighted * 100).toFixed(2)}%` : '88.24%'}
                     </td>
                     <td className="py-3.5 px-4 font-black text-emerald-600">
-                      {colabData?.logistic_regression_f1_score ? colabData.logistic_regression_f1_score.toFixed(2) : '1.00'}
+                      {colabData?.linear_svm_f1_score ? `${(colabData.linear_svm_f1_score * 100).toFixed(2)}%` : '85.01%'}
                     </td>
-                    <td className="py-3.5 px-4 text-[#212032] font-bold">{colabData?.test_instances_evaluated || 34}</td>
-                    <td className="py-3.5 px-4 font-sans">
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#7765E8]/10 text-[#7765E8]">
-                        Confidence Estimator (predict_proba)
-                      </span>
+                    <td className="py-3.5 px-4 text-emerald-600 font-black">
+                      87.16% ± 4.64%
                     </td>
                   </tr>
                 </tbody>
@@ -257,9 +264,9 @@ const MLAnalyticsPage = () => {
                 <FileText className="w-4 h-4" />
                 <span>Text Preprocessing</span>
               </div>
-              <h4 className="text-sm font-bold text-[#212032]">clean_resume_text()</h4>
+              <h4 className="text-sm font-bold text-[#212032]">clean_text() & Deduplication</h4>
               <p className="text-xs text-[#7E7C94] leading-relaxed">
-                Exact Colab Cell 15 cleaning logic: strips encoding artifacts, standardizes bullet points, removes escape sequences, and strips non-ASCII noise while preserving technical identifiers.
+                Exact notebook Section 4 cleaning logic: normalizes whitespace, strips UTF-8 BOM/non-breaking spaces and bullet artefacts, and removes 796 duplicate resume rows before splitting.
               </p>
             </div>
 
@@ -270,9 +277,10 @@ const MLAnalyticsPage = () => {
               </div>
               <h4 className="text-sm font-bold text-[#212032]">TF-IDF Vectorizer</h4>
               <div className="text-xs text-[#7E7C94] space-y-1 font-mono">
-                <div>max_features: <span className="text-[#212032] font-bold">{colabData?.preprocessing_config?.max_features || 3000}</span></div>
+                <div>max_features: <span className="text-[#212032] font-bold">{colabData?.preprocessing_config?.max_features || 5000}</span></div>
                 <div>ngram_range: <span className="text-[#212032] font-bold">({colabData?.preprocessing_config?.ngram_range?.join(', ') || '1, 2'})</span></div>
-                <div>stop_words: <span className="text-[#212032] font-bold">{colabData?.preprocessing_config?.stop_words || 'english'}</span></div>
+                <div>sublinear_tf: <span className="text-[#212032] font-bold">True</span></div>
+                <div>class_weight: <span className="text-[#212032] font-bold">balanced</span></div>
               </div>
             </div>
 
@@ -286,7 +294,7 @@ const MLAnalyticsPage = () => {
                 <div>Classes: <span className="text-[#212032] font-bold font-mono">25 Professional Categories</span></div>
                 <div>Training Set: <span className="text-[#212032] font-bold font-mono">132 Resumes (80%)</span></div>
                 <div>Testing Set: <span className="text-[#212032] font-bold font-mono">34 Resumes (20%)</span></div>
-                <div>Total Deduplicated: <span className="text-[#212032] font-bold font-mono">166 Resumes</span></div>
+                <div>Total Deduplicated: <span className="text-[#212032] font-bold font-mono">166 Unique Resumes</span></div>
               </div>
             </div>
           </div>
@@ -301,18 +309,16 @@ const MLAnalyticsPage = () => {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <span className="text-xs font-bold text-[#7765E8] uppercase tracking-wider">
-                  Empirically Selected Classifier
+                  Empirically Evaluated Classifiers (Deduplicated 80/20 Split)
                 </span>
                 <div className="text-2xl sm:text-3xl font-black text-[#212032] mt-0.5">
-                  {metricsData?.best_model || 'Linear Support Vector Machine'}
+                  {metricsData?.best_model || 'Logistic Regression & Linear SVM'}
                 </div>
               </div>
               <div className="text-left sm:text-right">
-                <div className="text-xs text-[#7E7C94] font-medium">Test Macro F1-Score (193 Test Resumes)</div>
+                <div className="text-xs text-[#7E7C94] font-medium">Holdout Test Accuracy (34 Unseen Test Resumes)</div>
                 <div className="text-3xl font-black font-mono text-emerald-600">
-                  {models[metricsData?.best_model]?.macro_f1
-                    ? `${(models[metricsData?.best_model].macro_f1 * 100).toFixed(2)}%`
-                    : '99.45%'}
+                  88.24%
                 </div>
               </div>
             </div>
@@ -326,7 +332,7 @@ const MLAnalyticsPage = () => {
           <div className="p-7 rounded-3xl glass-card border border-white/80 space-y-4 shadow-liquid">
             <h3 className="text-base font-bold text-[#212032] flex items-center gap-2">
               <Activity className="w-4 h-4 text-[#7765E8]" />
-              <span>Experimental Algorithm Benchmark (962 Corpus, 80/20 Stratified Split)</span>
+              <span>Supervised Classification Benchmark (166 Deduplicated Resumes, 80/20 Stratified Split)</span>
             </h3>
 
             <div className="overflow-x-auto">
@@ -335,36 +341,40 @@ const MLAnalyticsPage = () => {
                   <tr className="border-b border-white/80 text-[#7E7C94] font-bold">
                     <th className="py-3 px-4">Algorithm Tested</th>
                     <th className="py-3 px-4">Test Accuracy</th>
-                    <th className="py-3 px-4">Macro Precision</th>
-                    <th className="py-3 px-4">Macro Recall</th>
-                    <th className="py-3 px-4">Macro F1-Score</th>
-                    <th className="py-3 px-4">Weighted F1</th>
+                    <th className="py-3 px-4">Weighted Precision</th>
+                    <th className="py-3 px-4">Weighted Recall</th>
+                    <th className="py-3 px-4">Weighted F1-Score</th>
+                    <th className="py-3 px-4">3-Fold CV F1</th>
                     <th className="py-3 px-4">Selection Verdict</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/80 font-mono">
                   {Object.entries(models).map(([name, m]) => {
-                    const isBest = name === metricsData?.best_model;
+                    const isBest = name.includes(metricsData?.best_model || 'Logistic Regression');
                     return (
                       <tr key={name} className={`hover:bg-white/60 transition-colors ${isBest ? 'bg-[#7765E8]/5' : ''}`}>
                         <td className="py-3.5 px-4 font-sans font-bold text-[#212032] flex items-center gap-2">
-                          {isBest && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                           <span>{name}</span>
                         </td>
                         <td className="py-3.5 px-4 text-[#212032] font-bold">{(m.accuracy * 100).toFixed(2)}%</td>
-                        <td className="py-3.5 px-4 text-[#7E7C94]">{(m.macro_precision * 100).toFixed(2)}%</td>
-                        <td className="py-3.5 px-4 text-[#7E7C94]">{(m.macro_recall * 100).toFixed(2)}%</td>
-                        <td className={`py-3.5 px-4 font-black ${isBest ? 'text-emerald-600' : 'text-[#212032]'}`}>
-                          {(m.macro_f1 * 100).toFixed(2)}%
+                        <td className="py-3.5 px-4 text-[#7E7C94]">{((m.weighted_precision || m.macro_precision) * 100).toFixed(2)}%</td>
+                        <td className="py-3.5 px-4 text-[#7E7C94]">{((m.weighted_recall || m.macro_recall) * 100).toFixed(2)}%</td>
+                        <td className="py-3.5 px-4 font-black text-emerald-600">
+                          {(m.weighted_f1 * 100).toFixed(2)}%
                         </td>
-                        <td className="py-3.5 px-4 text-[#7E7C94]">{(m.weighted_f1 * 100).toFixed(2)}%</td>
+                        <td className="py-3.5 px-4 text-[#7765E8] font-bold">
+                          {m.cv_weighted_f1_mean ? `${(m.cv_weighted_f1_mean * 100).toFixed(2)}% ± ${(m.cv_weighted_f1_std * 100).toFixed(2)}%` : '87.16%'}
+                        </td>
                         <td className="py-3.5 px-4 font-sans">
                           {isBest ? (
                             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">
-                              Selected for Production
+                              Highest Holdout Weighted F1
                             </span>
                           ) : (
-                            <span className="text-[10px] text-[#7E7C94] font-medium">Benchmark Baseline</span>
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#7765E8]/10 text-[#7765E8]">
+                              Highest 3-Fold CV F1
+                            </span>
                           )}
                         </td>
                       </tr>
@@ -518,16 +528,16 @@ const MLAnalyticsPage = () => {
                   Q1: Why did you choose Linear SVM and Logistic Regression with TF-IDF for resume classification?
                 </div>
                 <p className="leading-relaxed">
-                  <strong>Answer:</strong> Text data mapped to TF-IDF n-grams (1, 2) creates a high-dimensional sparse vector space (3,000–5,000 features). Linear Support Vector Classifiers (LinearSVC) and Logistic Regression are mathematically optimal in high-dimensional sparse text spaces because text classification problems are almost always linearly separable. Linear SVM maximizes the margin between the separating hyperplane and support vectors, providing superior generalization without overfitting, yielding <strong>99.45% Macro F1</strong> across all 25 categories.
+                  <strong>Answer:</strong> Text data mapped to TF-IDF n-grams (1, 2) with sublinear TF scaling creates a high-dimensional sparse vector space (5,000 features). Linear Support Vector Classifiers (LinearSVC) and Logistic Regression with <code>class_weight=&quot;balanced&quot;</code> are mathematically well-suited for high-dimensional sparse text spaces. On our deduplicated corpus of 166 unique resumes (132 train / 34 test), both models achieved <strong>88.24% test accuracy</strong> (30/34 unseen resumes), with Logistic Regression achieving <strong>85.50% weighted F1</strong> and Linear SVM achieving <strong>87.16% ± 4.64%</strong> in 3-fold Stratified Cross-Validation.
                 </p>
               </div>
 
               <div className="p-5 rounded-2xl bg-white/70 border border-white/80 space-y-2 backdrop-blur-md shadow-xs">
                 <div className="font-bold text-[#7765E8] text-sm">
-                  Q2: Why is Macro F1 prioritized over standard Accuracy in this evaluation?
+                  Q2: Why are Weighted F1 and Macro F1 reported alongside Accuracy?
                 </div>
                 <p className="leading-relaxed">
-                  <strong>Answer:</strong> In `resumes.csv`, categories are imbalanced (e.g. Java Developer has 84 samples, whereas Advocate has 20 and Civil Engineer has 24). Standard accuracy is biased toward high-frequency majority classes. Macro F1 calculates the arithmetic mean of F1-scores across all 25 classes independently, treating small classes with equal importance and penalizing models that fail on minority classes.
+                  <strong>Answer:</strong> Across the 166 deduplicated resumes spanning 25 categories, class sizes vary (from 3 to 13 unique resumes per category). Standard accuracy alone can mask class-level precision/recall trade-offs. Weighted F1 accounts for per-class support while computing the harmonic mean of precision and recall, and <code>class_weight=&quot;balanced&quot;</code> ensures minority categories are weighted inversely proportional to class frequencies during training.
                 </p>
               </div>
 
@@ -536,7 +546,7 @@ const MLAnalyticsPage = () => {
                   Q3: How is data leakage prevented in this pipeline?
                 </div>
                 <p className="leading-relaxed">
-                  <strong>Answer:</strong> Our EDA discovered that `resumes.csv` contains 962 rows created by repeating 166 unique resumes ~5.8 times. The TF-IDF vectorizer was fitted <strong>strictly on the training split</strong> (`X_train`) and only transformed on `X_test`. In a naive pipeline where vectorizers are fitted on the entire dataset or duplicate resumes exist across train and test splits, identical text leaks into the test partition.
+                  <strong>Answer:</strong> Our EDA in Section 4 of the notebook discovered that <code>resumes.csv</code> contains 962 rows with 796 duplicate records (166 unique resumes repeated ~5.8 times). First, we explicitly deduplicate <code>resumes.csv</code> to <strong>166 unique resumes</strong> before splitting into <code>X_train</code> (132) and <code>X_test</code> (34). Second, the <code>TfidfVectorizer</code> is placed inside a scikit-learn <code>Pipeline</code> so it is fitted <strong>strictly on training data</strong> during both train/test evaluation and 3-fold Stratified Cross-Validation.
                 </p>
               </div>
 

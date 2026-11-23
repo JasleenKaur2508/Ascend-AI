@@ -1,5 +1,7 @@
 import re
 from typing import List, Dict, Optional
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 from app.preprocessing.text_cleaner import clean_text
 
 class ATSScorer:
@@ -14,15 +16,29 @@ class ATSScorer:
         }
         
         self.qualification_keywords = [
-            "bachelor", "b.tech", "btech", "b.e", "be", "bs", "master", "m.tech", 
-            "mtech", "m.s", "ms", "phd", "computer science", "engineering", 
-            "information technology", "diploma", "degree"
+            "bachelor", "b tech", "btech", "b e", "bsc", "b sc", "master", "m tech",
+            "mtech", "msc", "m sc", "phd", "computer science", "engineering",
+            "information technology", "computer applications", "diploma", "degree"
         ]
         
         self.experience_keywords = [
             "year", "years", "experience", "developed", "designed", "implemented", 
-            "managed", "led", "architected", "delivered", "maintained", "built", "project"
+            "managed", "led", "architected", "delivered", "maintained", "built", "project",
+            "automated", "proficient", "specializing"
         ]
+
+    def _compute_tfidf_similarity(self, cleaned_resume: str, cleaned_job: str) -> float:
+        if not cleaned_resume or not cleaned_job:
+            return 0.0
+        try:
+            vec = TfidfVectorizer(stop_words="english", ngram_range=(1, 2))
+            mat = vec.fit_transform([cleaned_resume, cleaned_job])
+            raw_cos = float(cosine_similarity(mat[0:1], mat[1:2])[0, 0])
+            # Scale lexical TF-IDF cosine similarity (typically 0.05-0.45 on short documents)
+            scaled = min(100.0, round(raw_cos * 220.0, 1))
+            return max(scaled, round(raw_cos * 100.0, 1))
+        except Exception:
+            return 50.0
 
     def score(
         self,
@@ -30,7 +46,7 @@ class ATSScorer:
         job_description: str,
         resume_skills: List[str],
         job_required_skills: List[str],
-        semantic_score: float = 75.0,
+        semantic_score: Optional[float] = None,
         custom_weights: Optional[Dict[str, float]] = None
     ) -> Dict:
         """
@@ -40,6 +56,9 @@ class ATSScorer:
         
         cleaned_resume = clean_text(resume_text)
         cleaned_job = clean_text(job_description)
+
+        if semantic_score is None:
+            semantic_score = self._compute_tfidf_similarity(cleaned_resume, cleaned_job)
         
         # 1. Skill Match Score
         resume_skills_set = set(s.lower() for s in resume_skills)
@@ -70,19 +89,19 @@ class ATSScorer:
         else:
             keyword_score = 65.0
             
-        # 3. Qualification Relevance
-        qual_matches = [q for q in self.qualification_keywords if q in cleaned_resume]
-        job_qual_needs = [q for q in self.qualification_keywords if q in cleaned_job]
-        
-        if job_qual_needs:
-            matched_quals = [q for q in job_qual_needs if q in cleaned_resume]
-            qual_score = (len(matched_quals) / len(job_qual_needs)) * 100
-        else:
-            qual_score = 90.0 if qual_matches else 60.0
+        # 3. Qualification Relevance (using word boundaries to prevent substring false positives)
+        qual_matches = [
+            q for q in self.qualification_keywords
+            if re.search(r"\b" + re.escape(q) + r"\b", cleaned_resume)
+        ]
+        qual_score = min(100.0, 60.0 + len(qual_matches) * 15.0) if qual_matches else 45.0
             
         # 4. Experience & Action Verbs Relevance
-        exp_matches = [e for e in self.experience_keywords if e in cleaned_resume]
-        exp_score = min(100.0, (len(exp_matches) / 8.0) * 100)
+        exp_matches = [
+            e for e in self.experience_keywords
+            if re.search(r"\b" + re.escape(e) + r"\b", cleaned_resume)
+        ]
+        exp_score = min(100.0, (len(exp_matches) / 6.0) * 100)
         
         # 5. Composite Score Calculation
         composite_score = round(
@@ -93,7 +112,7 @@ class ATSScorer:
              exp_score * weights["experience_relevance"]),
             1
         )
-        composite_score = max(20.0, min(98.0, composite_score))
+        composite_score = max(5.0, min(98.0, composite_score))
         
         # Actionable Recommendations
         recommendations = []

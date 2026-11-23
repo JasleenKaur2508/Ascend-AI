@@ -17,27 +17,49 @@ exports.getCourseRecommendations = async (req, res) => {
       limit: 8
     });
 
-    const courses = response.data.courses;
+    const rawCourses = response.data.courses || [];
 
-    // Upsert / sync into user's CourseRecommendation collection
-    for (const c of courses) {
-      await CourseRecommendation.findOneAndUpdate(
-        { userId: req.user._id, courseId: c.course_id },
-        {
-          userId: req.user._id,
-          courseId: c.course_id,
-          title: c.title,
-          skill: c.skill,
-          provider: c.provider,
-          difficulty: c.difficulty,
-          url: c.url,
-          reason: c.reason
-        },
-        { upsert: true, new: true }
-      );
+    // Deduplicate incoming courses by course_id, title, and url
+    const uniqueCourses = [];
+    const seenIds = new Set();
+    const seenTitles = new Set();
+    for (const c of rawCourses) {
+      const cid = (c.course_id || '').trim();
+      const ctitle = (c.title || '').trim().toLowerCase();
+      if (!cid || seenIds.has(cid) || seenTitles.has(ctitle)) continue;
+      seenIds.add(cid);
+      seenTitles.add(ctitle);
+      uniqueCourses.push(c);
     }
 
-    const savedCourses = await CourseRecommendation.find({ userId: req.user._id });
+    // Preserve completion status for existing courses while cleaning up duplicates
+    const existingDocs = await CourseRecommendation.find({ userId: req.user._id });
+    const completedByCourseId = new Map();
+    for (const doc of existingDocs) {
+      if (doc.completed) {
+        completedByCourseId.set(doc.courseId, true);
+      }
+    }
+
+    // Replace user's course list cleanly to prevent race-condition duplicates
+    await CourseRecommendation.deleteMany({ userId: req.user._id });
+
+    const docsToInsert = uniqueCourses.map((c) => ({
+      userId: req.user._id,
+      courseId: c.course_id,
+      title: c.title,
+      skill: c.skill,
+      provider: c.provider,
+      difficulty: c.difficulty,
+      url: c.url,
+      reason: c.reason,
+      completed: completedByCourseId.get(c.course_id) || false
+    }));
+
+    const savedCourses = docsToInsert.length > 0
+      ? await CourseRecommendation.insertMany(docsToInsert)
+      : [];
+
     return res.status(200).json({
       status: 'success',
       count: savedCourses.length,
@@ -67,14 +89,14 @@ exports.toggleCourseCompletion = async (req, res) => {
 
 exports.getCareerRoadmap = async (req, res) => {
   try {
+    const targetRole = req.user.targetRole || 'Full Stack Developer';
     let roadmap = await CareerRoadmap.findOne({ userId: req.user._id });
 
-    if (!roadmap) {
+    if (!roadmap || roadmap.targetRole !== targetRole) {
       // Find candidate's latest resume to extract skills
       const resume = await Resume.findOne({ userId: req.user._id }).sort({ createdAt: -1 });
       const candidateSkills = resume ? resume.extractedSkills.map(s => s.canonical) : [];
-      const targetRole = req.user.targetRole || 'Software Engineer';
-      const predictedCategory = resume ? resume.predictedCategory : 'Software Engineering';
+      const predictedCategory = resume ? resume.predictedCategory : targetRole;
 
       const response = await axios.post(`${ML_SERVICE_URL}/api/ml/career-roadmap`, {
         candidate_skills: candidateSkills,
@@ -83,12 +105,19 @@ exports.getCareerRoadmap = async (req, res) => {
         predicted_category: predictedCategory
       });
 
-      roadmap = await CareerRoadmap.create({
-        userId: req.user._id,
-        targetRole,
-        stages: response.data.stages,
-        overallProgress: 0
-      });
+      if (roadmap) {
+        roadmap.targetRole = targetRole;
+        roadmap.stages = response.data.stages;
+        roadmap.overallProgress = 0;
+        await roadmap.save();
+      } else {
+        roadmap = await CareerRoadmap.create({
+          userId: req.user._id,
+          targetRole,
+          stages: response.data.stages,
+          overallProgress: 0
+        });
+      }
     }
 
     return res.status(200).json({ status: 'success', data: roadmap });

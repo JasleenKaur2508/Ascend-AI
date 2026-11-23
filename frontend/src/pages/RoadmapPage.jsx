@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { careerAPI } from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import { resolveTargetRole } from '../utils/roleStandards';
 import {
   Map,
   CheckCircle2,
@@ -11,11 +13,13 @@ import {
 } from 'lucide-react';
 
 const RoadmapPage = () => {
+  const { user } = useAuth();
   const [roadmap, setRoadmap] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   const fetchRoadmap = async () => {
+    setLoading(true);
     try {
       const res = await careerAPI.getRoadmap();
       setRoadmap(res.data.data);
@@ -29,7 +33,7 @@ const RoadmapPage = () => {
 
   useEffect(() => {
     fetchRoadmap();
-  }, []);
+  }, [user?.targetRole]);
 
   const handleToggleTask = async (stageNumber, taskId) => {
     try {

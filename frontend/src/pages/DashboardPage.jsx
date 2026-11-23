@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { resumeAPI, jobAPI, careerAPI, authAPI } from '../services/api';
+import { AVAILABLE_ROLES, resolveTargetRole, computeRoleSkillGap } from '../utils/roleStandards';
 import {
   Sparkles,
   FileText,
@@ -28,16 +29,7 @@ const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [savingRole, setSavingRole] = useState(false);
 
-  const availableRoles = [
-    'Full Stack Developer',
-    'Software Engineer',
-    'Data Scientist',
-    'DevOps Engineer',
-    'Java Developer',
-    'Cloud Architect'
-  ];
-
-  const currentTargetRole = user?.targetRole || 'Full Stack Developer';
+  const currentTargetRole = resolveTargetRole(user?.targetRole, latestResume?.predictedCategory);
 
   useEffect(() => {
     const loadDashboardData = async () => {
@@ -49,7 +41,12 @@ const DashboardPage = () => {
         ]);
 
         if (resumeRes.status === 'fulfilled') {
-          setLatestResume(resumeRes.value.data.data);
+          const resData = resumeRes.value.data.data;
+          setLatestResume(resData);
+          if (user && !AVAILABLE_ROLES.includes(user.targetRole)) {
+            const resolved = resolveTargetRole(user.targetRole, resData?.predictedCategory);
+            updateUser({ targetRole: resolved });
+          }
         }
         if (matchesRes.status === 'fulfilled') {
           setMatches(matchesRes.value.data.data);
@@ -69,10 +66,15 @@ const DashboardPage = () => {
 
   const handleRoleChange = async (newRole) => {
     if (newRole === currentTargetRole || savingRole) return;
+    // Optimistically update context & localStorage immediately so Skill Gap & all pages stay in sync
+    updateUser({ targetRole: newRole });
     setSavingRole(true);
     try {
       await authAPI.updateProfile({ targetRole: newRole });
-      updateUser({ targetRole: newRole });
+      const roadmapRes = await careerAPI.getRoadmap();
+      if (roadmapRes?.data?.data) {
+        setRoadmap(roadmapRes.data.data);
+      }
     } catch (err) {
       console.error('Failed to update target role:', err);
     } finally {
@@ -92,7 +94,7 @@ const DashboardPage = () => {
   }
 
   const topSkills = latestResume ? latestResume.extractedSkills.slice(0, 8) : [];
-  const topMatch = matches.length > 0 ? matches[0] : null;
+  const roleGap = computeRoleSkillGap(currentTargetRole, latestResume?.extractedSkills || []);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -110,7 +112,7 @@ const DashboardPage = () => {
           <div className="flex items-center gap-3 flex-wrap text-xs text-[#7E7C94]">
             <span className="font-semibold">Active Target Role:</span>
             <div className="flex items-center gap-1.5 flex-wrap">
-              {availableRoles.map((role) => (
+              {AVAILABLE_ROLES.map((role) => (
                 <button
                   key={role}
                   onClick={() => handleRoleChange(role)}
@@ -168,7 +170,7 @@ const DashboardPage = () => {
             <Target className="w-4 h-4 text-[#7765E8]" />
           </div>
           <div className="text-xl font-black text-[#212032] font-mono">
-            {latestResume ? latestResume.skillCount : 0}
+            {latestResume ? latestResume.extractedSkills.length : 0}
           </div>
           <div className="text-xs text-[#7E7C94] flex items-center gap-1.5 font-medium">
             <span className="text-[#7765E8] font-bold">{topSkills.length}</span>
@@ -176,19 +178,22 @@ const DashboardPage = () => {
           </div>
         </div>
 
-        {/* Card 3: Top Job Compatibility */}
-        <div className="p-6 rounded-3xl glass-card glass-card-hover border border-white/80 space-y-3">
+        {/* Card 3: Target Role Alignment (Consistent with Skill Gap Page) */}
+        <Link
+          to="/skill-gap"
+          className="p-6 rounded-3xl glass-card glass-card-hover border border-white/80 space-y-3 block"
+        >
           <div className="flex items-center justify-between text-[#7E7C94]">
-            <span className="text-xs font-bold uppercase tracking-wider">Top Job Alignment</span>
+            <span className="text-xs font-bold uppercase tracking-wider">Target Role Match</span>
             <Briefcase className="w-4 h-4 text-[#7765E8]" />
           </div>
           <div className="text-xl font-black text-[#212032] font-mono">
-            {topMatch ? `${topMatch.compatibilityScore}%` : 'N/A'}
+            {latestResume ? `${roleGap.matchPct}%` : 'N/A'}
           </div>
           <div className="text-xs text-[#7E7C94] truncate font-medium">
-            {topMatch ? topMatch.jobTitle : 'Run job match to evaluate'}
+            {currentTargetRole} ({roleGap.possessedSkills.length}/{roleGap.requiredSkills.length} skills)
           </div>
-        </div>
+        </Link>
 
         {/* Card 4: Roadmap Progress */}
         <div className="p-6 rounded-3xl glass-card glass-card-hover border border-white/80 space-y-3">

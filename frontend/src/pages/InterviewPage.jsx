@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { careerAPI, resumeAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { resolveTargetRole } from '../utils/roleStandards';
 import {
   MessageSquare,
   Sparkles,
@@ -15,7 +16,7 @@ import {
 
 const InterviewPage = () => {
   const { user } = useAuth();
-  const [jobTitle, setJobTitle] = useState(user?.targetRole || 'Full Stack Developer');
+  const [jobTitle, setJobTitle] = useState(resolveTargetRole(user?.targetRole));
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(false);
   const [expandedIndex, setExpandedIndex] = useState(0);
@@ -36,7 +37,9 @@ const InterviewPage = () => {
   };
 
   useEffect(() => {
-    fetchQuestions(user?.targetRole || jobTitle);
+    const activeRole = resolveTargetRole(user?.targetRole);
+    setJobTitle(activeRole);
+    fetchQuestions(activeRole);
   }, [user?.targetRole]);
 
   const handleTogglePracticed = async (idx) => {
